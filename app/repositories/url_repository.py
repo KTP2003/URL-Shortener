@@ -1,21 +1,36 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.url import URL
 
+
 class URLRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def create_url(self, url: URL) -> URL:
+    async def create_url(self, url: URL) -> URL:
         self.session.add(url)
-        self.session.commit()
-        self.session.refresh(url)
+        await self.session.flush()
+        await self.session.refresh(url)
         return url
-    
-    def get_by_short_code(self, short_code: str) -> URL | None:
-        return self.session.query(URL).filter(URL.short_code == short_code).first()
-    
-    def get_by_original_url(self, original_url: str) -> URL | None:
-        return self.session.query(URL).filter(URL.original_url == original_url).first()
 
-    def get_normalised_url(self, normalised_url: str) -> URL | None:
-        return self.session.query(URL).filter(URL.normalised_url == normalised_url).first()
+    async def get_by_short_code(self, short_code: str) -> URL | None:
+        result = await self.session.execute(
+            select(URL).where(URL.short_code == short_code)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_original_url(self, original_url: str) -> URL | None:
+        result = await self.session.execute(
+            select(URL).where(URL.original_url == original_url)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_normalised_url(self, normalised_url: str) -> URL | None:
+        result = await self.session.execute(
+            select(URL).where(URL.normalised_url == normalised_url)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_normalised_url(self, normalised_url: str) -> URL | None:
+        return await self.get_by_normalised_url(normalised_url)
