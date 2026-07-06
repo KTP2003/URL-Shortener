@@ -31,3 +31,6 @@ class URLService:
         new_url = URL(original_url=url, normalised_url=normalised_url, short_code=short_code)
         return await self.repository.create_url(new_url)
 
+    async def get_by_short_code(self, short_code: str) -> URL | None:
+        return await self.repository.get_by_short_code(short_code)
+
