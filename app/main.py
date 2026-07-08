@@ -6,8 +6,18 @@ from fastapi.responses import RedirectResponse
 from app.api.routes.shortener import router
 from app.db.dependencies import get_url_service
 from app.services.url_service import URLService
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+from app.db.session import engine
+from app.models.url import Base
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(router)
 
 @app.get("/{short_code}", response_class=RedirectResponse)
