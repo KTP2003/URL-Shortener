@@ -1,7 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import RedirectResponse, JSONResponse
 
 from app.api.routes.shortener import router
 from app.db.dependencies import get_url_service
@@ -10,6 +10,9 @@ from contextlib import asynccontextmanager
 
 from app.db.session import engine
 from app.models.url import Base
+from app.exceptions import URLShortenerException
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,4 +34,16 @@ async def redirect_short_url(
     return RedirectResponse(
         url.original_url,
         status_code=307,
+    )
+
+@app.exception_handler(URLShortenerException)
+async def application_exception_handler(
+    request: Request,
+    exc: URLShortenerException,
+):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail,
+        },
     )
