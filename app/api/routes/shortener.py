@@ -17,7 +17,10 @@ async def shorten_url(
     service: Annotated[URLService, Depends(get_url_service)],
 ) -> URLResponse:
     '''Endpoint to shorten a URL. It accepts a URLCreate object, normalizes the URL, checks for existing entries, generates a unique short code if necessary, and returns the created or existing URL entry.'''
-    url = await service.create_url(str(payload.url))
+    url = await service.create_url(
+        url = str(payload.url),
+        alias = payload.alias if payload.alias is not None else None
+    )
     return URLResponse(
         short_code=url.short_code,
         short_url=f"{settings.base_url.rstrip('/')}/{url.short_code}",
