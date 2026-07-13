@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from app.exceptions import InvalidAliasError
 from app.models.url import URL
 from app.repositories.url_repository import URLRepository
 from app.utils.alias import validate_alias
@@ -32,7 +33,10 @@ class URLService:
 
 
         if alias is not None:
-            short_code = validate_alias(alias)
+            try:
+                short_code = validate_alias(alias)
+            except ValueError as ecx:
+                raise InvalidAliasError(str(ecx)) from ecx
 
             existing_alias = await self.repository.get_by_short_code(short_code)
             if existing_alias:
