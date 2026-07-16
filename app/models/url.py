@@ -13,6 +13,7 @@ class URL(Base):
     normalised_url: Mapped[str] = mapped_column(Text, nullable=False)
     short_code: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     def __repr__(self) -> str:  # pragma: no cover - simple repr
         return f"<URL id={self.id} short_code={self.short_code} original={self.original_url!r}>"

@@ -36,3 +36,6 @@ class AliasAlreadyExistsError(ConflictError):
 
 class URLNotFoundError(ResourceNotFoundError):
     detail = "Short URL not found."
+
+class InvalidExpirationError(ValidationError):
+    detail = "Invalid expiration time provided."
