@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import HTTPException
-from app.exceptions import AliasAlreadyExistsError, InvalidAliasError, InvalidExpirationError
+from app.exceptions import AliasAlreadyExistsError, InvalidAliasError, InvalidExpirationError, URLExpiredError, URLNotFoundError
 from app.models.url import URL
 from app.repositories.url_repository import URLRepository
 from app.utils.alias import validate_alias
@@ -37,10 +36,11 @@ class URLService:
             alias: str | None = None,
             expires_at: datetime | None = None
         ) -> URL:
-        normalised_url = self._normalise_url(url)
-        existing_url = await self.repository.get_by_normalised_url(normalised_url)
 
         self._validate_expiration(expires_at)
+
+        normalised_url = self._normalise_url(url)
+        existing_url = await self.repository.get_by_normalised_url(normalised_url)
 
         if alias is not None:
             try:
@@ -57,9 +57,13 @@ class URLService:
             
             short_code = await self._generate_unique_short_code()
 
-        new_url = URL(original_url=url, normalised_url=normalised_url, short_code=short_code)
+        new_url = URL(original_url=url, normalised_url=normalised_url, short_code=short_code, expires_at=expires_at)
         return await self.repository.create_url(new_url)
 
-    async def get_by_short_code(self, short_code: str) -> URL | None:
-        return await self.repository.get_by_short_code(short_code)
-
+    async def resolve_short_code(self, short_code: str) -> URL:
+        url = await self.repository.get_by_short_code(short_code)
+        if url is None:
+            raise URLNotFoundError()
+        if url and url.expires_at and url.expires_at <= datetime.now(timezone.utc):
+            raise URLExpiredError()
+        return url

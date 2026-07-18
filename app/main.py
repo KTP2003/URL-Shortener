@@ -28,9 +28,8 @@ async def redirect_short_url(
     short_code: str,
     service: Annotated[URLService, Depends(get_url_service)],
 ) -> RedirectResponse:
-    url = await service.get_by_short_code(short_code)
-    if not url:
-        raise HTTPException(status_code=404, detail="Short code not found")
+    url = await service.resolve_short_code(short_code)
+    
     return RedirectResponse(
         url.original_url,
         status_code=307,

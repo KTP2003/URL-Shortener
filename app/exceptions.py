@@ -39,3 +39,7 @@ class URLNotFoundError(ResourceNotFoundError):
 
 class InvalidExpirationError(ValidationError):
     detail = "Invalid expiration time provided."
+
+class URLExpiredError(URLShortenerException):
+    status_code = HTTPStatus.GONE
+    detail = "Short URL has expired."
