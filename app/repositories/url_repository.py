@@ -1,5 +1,4 @@
-from time import timezone
-import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,4 +40,5 @@ class URLRepository:
         url.click_count += 1
         url.last_accessed_at = datetime.now(timezone.utc)
 
+        await self.session.refresh(url)
         await self.session.commit()
