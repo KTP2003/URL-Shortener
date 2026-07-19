@@ -38,6 +38,8 @@ class URLService:
         ) -> URL:
 
         self._validate_expiration(expires_at)
+        
+        await self.repository.record_redirect(url)
 
         normalised_url = self._normalise_url(url)
         existing_url = await self.repository.get_by_normalised_url(normalised_url)

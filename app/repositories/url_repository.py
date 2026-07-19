@@ -1,3 +1,5 @@
+from time import timezone
+import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,3 +36,9 @@ class URLRepository:
 
     async def get_normalised_url(self, normalised_url: str) -> URL | None:
         return await self.get_by_normalised_url(normalised_url)
+
+    async def record_redirect(self, url: URL) -> None:
+        url.click_count += 1
+        url.last_accessed_at = datetime.now(timezone.utc)
+
+        await self.session.commit()
