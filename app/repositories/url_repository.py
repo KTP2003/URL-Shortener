@@ -40,5 +40,9 @@ class URLRepository:
         url.click_count += 1
         url.last_accessed_at = datetime.now(timezone.utc)
 
+        await self.session.commit()
         await self.session.refresh(url)
+
+    async def delete_url(self, url: URL) -> None:
+        await self.session.delete(url)
         await self.session.commit()

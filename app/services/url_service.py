@@ -69,3 +69,10 @@ class URLService:
 
         await self.repository.record_redirect(url)
         return url
+
+    async def delete_url(self, short_code: str) -> None:
+        url = await self.repository.get_by_short_code(short_code)
+        if url is None:
+            raise URLNotFoundError()
+
+        await self.repository.delete_url(url) 

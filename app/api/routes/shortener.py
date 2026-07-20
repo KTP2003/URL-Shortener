@@ -26,3 +26,10 @@ async def shorten_url(
         short_url=f"{settings.base_url.rstrip('/')}/{url.short_code}",
     )
 
+@router.delete("/{short_code}", status_code=204)
+async def delete_url(
+    short_code: str,
+    service: Annotated[URLService, Depends(get_url_service)],
+) -> None:
+    '''Endpoint to delete a shortened URL.'''
+    await service.delete_url(short_code)
