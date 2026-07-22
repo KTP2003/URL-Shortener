@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from app.schemas.url import URLCreate, URLResponse
 from app.db.dependencies import get_url_service
 from app.services.url_service import URLService
@@ -33,3 +33,11 @@ async def delete_url(
 ) -> None:
     '''Endpoint to delete a shortened URL.'''
     await service.delete_url(short_code)
+
+@router.get("/qr/{short_code}", response_class=Response)
+async def get_qr_code(
+    short_code: str,
+    service: Annotated[URLService, Depends(get_url_service)],
+) -> Response:
+    qr = await service.get_qr_code(short_code)
+    return Response(content=qr, media_type="image/png")

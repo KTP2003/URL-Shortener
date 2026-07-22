@@ -5,7 +5,8 @@ from app.models.url import URL
 from app.repositories.url_repository import URLRepository
 from app.utils.alias import validate_alias
 from app.utils.short_code import generate_short_code
-
+from app.utils.qr import generate_qr_code
+from app.core.config import settings
 
 class URLService:
     def __init__(self, repository: URLRepository):
@@ -60,19 +61,25 @@ class URLService:
         new_url = URL(original_url=url, normalised_url=normalised_url, short_code=short_code, expires_at=expires_at)
         return await self.repository.create_url(new_url)
 
-    async def resolve_short_code(self, short_code: str) -> URL:
+    async def _get_active_url(self, short_code: str) -> URL:
         url = await self.repository.get_by_short_code(short_code)
         if url is None:
             raise URLNotFoundError()
-        if url and url.expires_at and url.expires_at <= datetime.now(timezone.utc):
+        if url.expires_at and url.expires_at <= datetime.now(timezone.utc):
             raise URLExpiredError()
+        return url
 
+    async def resolve_short_code(self, short_code: str) -> URL:
+        url = await self._get_active_url(short_code)
         await self.repository.record_redirect(url)
         return url
 
     async def delete_url(self, short_code: str) -> None:
-        url = await self.repository.get_by_short_code(short_code)
-        if url is None:
-            raise URLNotFoundError()
+        url = await self._get_active_url(short_code)
 
-        await self.repository.delete_url(url) 
+        await self.repository.delete_url(url)
+
+    async def get_qr_code(self, short_code: str) -> bytes:
+        url = await self._get_active_url(short_code)
+        short_url = f"{settings.BASE_URL}/{url.short_code}"
+        return generate_qr_code(short_url)
