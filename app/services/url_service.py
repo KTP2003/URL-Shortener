@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from app.cache.url_cache import URLCache
 
 from app.exceptions import AliasAlreadyExistsError, InvalidAliasError, InvalidExpirationError, URLExpiredError, URLNotFoundError
 from app.models.url import URL
@@ -9,8 +10,9 @@ from app.utils.qr import generate_qr_code
 from app.core.config import settings
 
 class URLService:
-    def __init__(self, repository: URLRepository):
+    def __init__(self, repository: URLRepository, cache: URLCache):
         self.repository = repository
+        self.cache = cache
 
     def _normalise_url(self, url: str) -> str:
         """Normalise the URL by ensuring it has a scheme and is in lowercase."""
