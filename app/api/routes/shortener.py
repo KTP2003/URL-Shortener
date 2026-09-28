@@ -1,9 +1,11 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, Response
-from app.schemas.url import URLCreate, URLResponse
-from app.db.dependencies import get_url_service
-from app.services.url_service import URLService
+
 from app.core.config import settings
+from app.db.dependencies import get_url_service
+from app.schemas.url import URLCreate, URLResponse
+from app.services.url_service import URLService
 
 router = APIRouter(
     prefix="/urls",
@@ -16,14 +18,16 @@ async def shorten_url(
     payload: URLCreate,
     service: Annotated[URLService, Depends(get_url_service)],
 ) -> URLResponse:
-    '''Endpoint to shorten a URL. It accepts a URLCreate object, normalizes the URL, checks for existing entries, generates a unique short code if necessary, and returns the created or existing URL entry.'''
+    '''Shorten a URL, reusing the existing short code if it was already shortened.'''
     url = await service.create_url(
-        url = str(payload.url),
-        alias = payload.alias if payload.alias is not None else None
+        url=str(payload.url),
+        alias=payload.alias,
+        expires_at=payload.expires_at,
     )
     return URLResponse(
         short_code=url.short_code,
         short_url=f"{settings.base_url.rstrip('/')}/{url.short_code}",
+        expires_at=url.expires_at,
     )
 
 @router.delete("/{short_code}", status_code=204)

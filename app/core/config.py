@@ -1,10 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    database_url: str # this is the database URL for connecting to the PostgreSQL database, and it is str cause it is a string value that represents the connection string for the database.
+    database_url: str
     base_url: str
     redis_url: str
-    cache_ttl: int
+    cache_ttl: int = 3600
 
     model_config = SettingsConfigDict(
         env_file = ".env",
@@ -13,4 +13,3 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
-#print(settings.database_url)

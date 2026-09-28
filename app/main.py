@@ -1,24 +1,27 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.api.routes.shortener import router
 from app.db.dependencies import get_url_service
-from app.services.url_service import URLService
-from contextlib import asynccontextmanager
-
+from app.db.redis import redis_client
 from app.db.session import engine
-from app.models.url import Base
 from app.exceptions import URLShortenerException
-
+from app.models.url import Base
+from app.services.url_service import URLService
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # ponytail: create_all duplicates Alembic, but the initial migration only
+    # ALTERs columns so it cannot build the schema from scratch. Drop this once
+    # a real create_table migration exists.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
+    await redis_client.aclose()
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router)
@@ -28,10 +31,10 @@ async def redirect_short_url(
     short_code: str,
     service: Annotated[URLService, Depends(get_url_service)],
 ) -> RedirectResponse:
-    url = await service.resolve_short_code(short_code)
-    
+    redirect = await service.resolve_short_code(short_code)
+
     return RedirectResponse(
-        url.original_url,
+        redirect.original_url,
         status_code=307,
     )
 

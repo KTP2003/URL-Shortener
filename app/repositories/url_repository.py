@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from sqlalchemy import select
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.url import URL
@@ -21,28 +22,22 @@ class URLRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_original_url(self, original_url: str) -> URL | None:
-        result = await self.session.execute(
-            select(URL).where(URL.original_url == original_url)
-        )
-        return result.scalar_one_or_none()
-
     async def get_by_normalised_url(self, normalised_url: str) -> URL | None:
         result = await self.session.execute(
             select(URL).where(URL.normalised_url == normalised_url)
         )
         return result.scalar_one_or_none()
 
-    async def get_normalised_url(self, normalised_url: str) -> URL | None:
-        return await self.get_by_normalised_url(normalised_url)
-
-    async def record_redirect(self, url: URL) -> None:
-        url.click_count += 1
-        url.last_accessed_at = datetime.now(timezone.utc)
-
-        await self.session.commit()
-        await self.session.refresh(url)
+    async def record_redirect(self, short_code: str) -> None:
+        """Bump click stats without loading the row, so a cache hit costs one query."""
+        await self.session.execute(
+            update(URL)
+            .where(URL.short_code == short_code)
+            .values(
+                click_count=URL.click_count + 1,
+                last_accessed_at=datetime.now(timezone.utc),
+            )
+        )
 
     async def delete_url(self, url: URL) -> None:
         await self.session.delete(url)
-        await self.session.commit()

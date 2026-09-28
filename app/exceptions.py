@@ -11,15 +11,12 @@ class URLShortenerException(Exception):
         super().__init__(self.detail)
 
 class ValidationError(URLShortenerException):
-    """Exception raised for validation errors."""
     status_code: HTTPStatus = HTTPStatus.BAD_REQUEST
 
 class ConflictError(URLShortenerException):
-    """Exception raised for conflicts, such as duplicate entries."""
     status_code: HTTPStatus = HTTPStatus.CONFLICT
 
 class ResourceNotFoundError(URLShortenerException):
-    """Exception raised when a requested resource is not found."""
     status_code: HTTPStatus = HTTPStatus.NOT_FOUND
 
 class InvalidAliasError(ValidationError):
@@ -36,9 +33,6 @@ class AliasAlreadyExistsError(ConflictError):
 
 class URLNotFoundError(ResourceNotFoundError):
     detail = "Short URL not found."
-
-class InvalidExpirationError(ValidationError):
-    detail = "Invalid expiration time provided."
 
 class URLExpiredError(URLShortenerException):
     status_code = HTTPStatus.GONE

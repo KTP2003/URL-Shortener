@@ -17,5 +17,5 @@ class URL(Base):
     click_count: Mapped[int] = mapped_column(nullable=False, default=0)
     last_accessed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    def __repr__(self) -> str:  # pragma: no cover - simple repr
+    def __repr__(self) -> str:
         return f"<URL id={self.id} short_code={self.short_code} original={self.original_url!r}>"
